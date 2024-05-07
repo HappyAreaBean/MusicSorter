@@ -1,0 +1,56 @@
+plugins {
+    id 'application'
+    id("com.github.johnrengelman.shadow") version "8.1.1"
+}
+
+group = 'net.fantasyrealms'
+version = '1.0-SNAPSHOT'
+
+application {
+    mainClass = 'net.fantasyrealms.musicsorter.Main'
+}
+
+repositories {
+    mavenCentral()
+
+    maven {
+        url "https://repo.fantasyrealms.net/other-libraries"
+    }
+}
+
+dependencies {
+    implementation "net.jthink:jaudiotagger:2.3.15"
+
+    implementation 'org.apache.commons:commons-lang3:3.14.0'
+    implementation 'commons-io:commons-io:2.16.1'
+    implementation 'org.apache.commons:commons-text:1.11.0'
+    implementation 'commons-cli:commons-cli:1.6.0'
+
+    implementation 'org.jodd:jodd-core:5.3.0'
+
+    implementation 'org.slf4j:slf4j-api:2.0.12'
+
+    implementation 'ch.qos.logback:logback-classic:1.5.4'
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+
+    compileOnly 'org.projectlombok:lombok:1.18.32'
+    annotationProcessor 'org.projectlombok:lombok:1.18.32'
+
+    testCompileOnly 'org.projectlombok:lombok:1.18.32'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.32'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+shadowJar {
+    minimize {
+        exclude(dependency('org.slf4j:.*:.*'))
+        exclude(dependency('ch.qos.logback:.*:.*'))
+    }
+    archiveClassifier.set("")
+    archiveVersion.set("")
+}
