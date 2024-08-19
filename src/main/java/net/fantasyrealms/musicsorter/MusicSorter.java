@@ -25,8 +25,10 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static net.fantasyrealms.musicsorter.Constant.DEFAULT_INPUT;
@@ -64,7 +66,7 @@ public class MusicSorter {
         int skipped = 0;
 
         List<String> skippedMessage = new ArrayList<>();
-        File skippedFile = new File("skipped-%s".formatted(timeFormatter.format(Instant.now())));
+        File skippedFile = new File("skipped-%s".formatted(timeFormatter.format(LocalDateTime.now())));
 
         for (File file : input.listFiles()) {
 
