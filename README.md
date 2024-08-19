@@ -9,7 +9,7 @@ your music files based on artist and album information.
 
 * Sorts music files into folders by artist and album
 
-* Generates cover art images for albums (optional)
+* Customizable output and input folder
 
 * Supports various audio file formats
 
