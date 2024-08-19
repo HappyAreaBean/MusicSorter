@@ -11,6 +11,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.tag.FieldKey;
@@ -23,6 +24,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 import static net.fantasyrealms.musicsorter.Constant.DEFAULT_INPUT;
 import static net.fantasyrealms.musicsorter.Constant.DEFAULT_OUTPUT;
@@ -36,6 +41,7 @@ public class MusicSorter {
     public boolean generateCover;
     public boolean deleteOriginal;
     public String[] args;
+    private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_hh-mm-ss");
 
     public MusicSorter(String[] args) {
         this.args = args;
@@ -55,14 +61,28 @@ public class MusicSorter {
     @SneakyThrows
     private void run() {
         int processed = 0;
+        int skipped = 0;
+
+        List<String> skippedMessage = new ArrayList<>();
+        File skippedFile = new File("skipped-%s".formatted(timeFormatter.format(Instant.now())));
 
         for (File file : input.listFiles()) {
 
             log.info("Reading file > {}", file.getName());
             log.info("");
 
-            AudioFile audioFile = new AudioFileIO().readFile(file);
-            Tag tag = audioFile.getTag();
+            AudioFile audioFile;
+            Tag tag;
+
+            try {
+                audioFile = new AudioFileIO().readFile(file);
+                tag = audioFile.getTag();
+            } catch (Throwable ex) {
+                log.error("Error when reading file > {}", file.getName(), ex);
+                skippedMessage.add("%s | %s".formatted(file.getName(), ex.getMessage()));
+                skipped++;
+                continue;
+            }
 
             log.info("");
             log.info("Processing file > {}", file.getName());
@@ -81,8 +101,11 @@ public class MusicSorter {
             log.info(" - Artist: {}", artist);
             log.info(" - Album: {}", album);
 
-            File artistFolder = new File(output, artist.replaceAll(INVALID_CHAR, ""));
-            File albumFolder = new File(artistFolder, album.replaceAll(INVALID_CHAR, ""));
+            String formatedArtist = StringUtils.normalizeSpace(artist.replaceAll(INVALID_CHAR, ""));
+            String formatedAlbum = StringUtils.normalizeSpace(album.replaceAll(INVALID_CHAR, ""));
+
+            File artistFolder = new File(output, formatedArtist);
+            File albumFolder = new File(artistFolder, formatedAlbum);
 
             if (!artistFolder.exists())
                 if (artistFolder.mkdir()) log.warn("* Created artist folder: {}", artistFolder);
@@ -122,6 +145,15 @@ public class MusicSorter {
 
         log.info("");
         log.info("*** All %s files has been processed. ***".formatted(processed));
+
+        if (skipped > 0) {
+            FileUtils.writeLines(skippedFile, skippedMessage);
+
+            log.info("");
+            log.info("*** %s files skipped. ***".formatted(skippedFile));
+            log.info("*** Please check your %s file for more info. ***".formatted(skippedFile.getName()));
+        }
+
         end();
     }
 
